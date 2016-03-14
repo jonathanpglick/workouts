@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Core Circuit B</title>
+
+  <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.1.min.js"></script>
+  <script type="text/javascript">
+
+    var exercises = [
+      '4 point plank',
+      '2 foot jump',
+      '3 point plank (L Foot)',
+      'L foot jump',
+      '3 point plank (R Foot)',
+      'R foot jump',
+      '3 point plank (L Hand)',
+      'RL foot jump',
+      '3 point plank (R Hand)',
+      'R foot jump',
+      '2 point plank (LR)',
+      'L foot jump',
+      '2 point plank (RL)',
+      '2 foot jump',
+      '4 point plank'
+    ];
+
+    var seconds = 30;
+
+    function preventDefault(fn) {
+      return function(e) {
+        if (e) { e.preventDefault(); }
+        fn();
+      }
+    }
+
+    function main() {
+
+      var state = {
+        running: false,
+        time: seconds,
+        currentExercise: 0
+      };
+      var timerTimeout = undefined;
+      var $timer = $('.timer');
+      var $exercise = $('.exercise');
+
+      $('.start').on('click', preventDefault(start));
+      $('.stop').on('click', preventDefault(stop));
+      $('.reset').on('click', preventDefault(reset));
+
+      function dispatch(stateChange) {
+        state = Object.assign({}, state, stateChange);
+        render(state);
+      }
+
+      function tick() {
+        var newState = {}
+        if (state.time - 1 < 0) {
+          // New exercise.
+          newState.time = seconds;
+          if (state.currentExercise + 1 >= exercises.length) {
+            stop();
+            return;
+          }
+          else {
+            newState.currentExercise = state.currentExercise + 1;
+            beep(100, 500);
+          }
+        }
+        else {
+          newState.time = state.time - 1;
+          beep(100);
+        }
+        dispatch(newState);
+        if (state.running) {
+          setTimeout(tick, 1000);
+        }
+      }
+
+      function start() {
+        dispatch({
+          running: true
+        });
+
+        timerTimeout = setTimeout(tick, 1000);
+      }
+
+      function stop() {
+        dispatch({
+          running: false
+        });
+        if (timerTimeout) {
+          clearTimeout(timerTimeout);
+          timerTimeout = undefined;
+        }
+      }
+
+      function reset() {
+        dispatch({
+          running: false,
+          time: seconds,
+          currentExercise: 0
+        });
+      }
+
+      function render(state) {
+        $timer.text(state.time);
+        $exercise.text(exercises[state.currentExercise] || '');
+      }
+
+    }
+
+    //if you have another AudioContext class use that one, as some browsers have a limit
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
+
+    //All arguments are optional:
+
+    //duration of the tone in milliseconds. Default is 500
+    //frequency of the tone in hertz. default is 440
+    //volume of the tone. Default is 1, off is 0.
+    //type of tone. Possible values are sine, square, sawtooth, triangle, and custom. Default is sine.
+    //callback to use on end of tone
+    function beep(duration, frequency, volume, type, callback) {
+        var oscillator = audioCtx.createOscillator();
+        var gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (volume){gainNode.gain.value = volume;};
+        if (frequency){oscillator.frequency.value = frequency;}
+        if (type){oscillator.type = type;}
+        if (callback){oscillator.onended = callback;}
+
+        oscillator.start();
+        setTimeout(function(){oscillator.stop()}, (duration ? duration : 500));
+    };
+
+    $(main);
+
+  </script>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      font-size: 20px;
+    }
+    .buttons {
+      font-size: 20px;
+    }
+    .timer {
+      margin: 100px;
+      font-size: 200px;
+    }
+    .exercise {
+      font-size: 180px;
+    }
+  </style>
+</head>
+<body>
+  <div class="buttons">
+    <button class="start">Start</button>
+    <button class="stop">Stop</button>
+    <button class="reset">Reset</button>
+  </div>
+
+  <div class="timer"></div>
+  <div class="exercise"></div>
+</body>
+</html>
