@@ -35,6 +35,8 @@
 
     function main() {
 
+      // Setup.
+
       var state = {
         running: false,
         time: seconds,
@@ -43,10 +45,18 @@
       var timerTimeout = undefined;
       var $timer = $('.timer');
       var $exercise = $('.exercise');
+      var $start = $('.start');
+      var $stop = $('.stop');
+      var $reset = $('.reset');
 
-      $('.start').on('click', preventDefault(start));
-      $('.stop').on('click', preventDefault(stop));
-      $('.reset').on('click', preventDefault(reset));
+      $start.on('click', preventDefault(start));
+      $stop.on('click', preventDefault(stop));
+      $reset.on('click', preventDefault(reset));
+
+      render(state);
+
+
+      // Functions.
 
       function dispatch(stateChange) {
         state = Object.assign({}, state, stateChange);
@@ -106,20 +116,28 @@
       function render(state) {
         $timer.text(state.time);
         $exercise.text(exercises[state.currentExercise] || '');
+        if (state.running) {
+          $start.attr('disabled', 'disabled');
+          $stop.removeAttr('disabled');
+          $reset.attr('disabled', 'disabled');
+        }
+        else {
+          $start.removeAttr('disabled');
+          $stop.attr('disabled', 'disabled');
+          $reset.attr('disabled', 'disabled');
+        }
       }
 
     }
 
-    //if you have another AudioContext class use that one, as some browsers have a limit
-    var audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
-
     //All arguments are optional:
-
     //duration of the tone in milliseconds. Default is 500
     //frequency of the tone in hertz. default is 440
     //volume of the tone. Default is 1, off is 0.
     //type of tone. Possible values are sine, square, sawtooth, triangle, and custom. Default is sine.
     //callback to use on end of tone
+    //if you have another AudioContext class use that one, as some browsers have a limit
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
     function beep(duration, frequency, volume, type, callback) {
         var oscillator = audioCtx.createOscillator();
         var gainNode = audioCtx.createGain();
